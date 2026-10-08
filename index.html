@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JalaMitra – Smart Water and Drainage Monitoring System</title>
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Leaflet CSS & JS for Community Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Chart.js for Admin Analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <!-- GLOBAL HEADER BAR -->
+  <header class="global-header">
+    <div class="brand-wrapper" onclick="navigateTo('home')">
+      <!-- Custom SVG Logo -->
+      <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="45" fill="url(#logoGlow)" opacity="0.2"/>
+        <path d="M50 15 C30 45, 20 60, 20 72 A30 30 0 0 0 80 72 C80 60, 70 45, 50 15 Z" fill="url(#waterGrad)"/>
+        <path d="M50 40 C42 60, 35 68, 50 82 C65 68, 58 60, 50 40 Z" fill="#10b981" opacity="0.85"/>
+        <circle cx="50" cy="55" r="4" fill="#ffffff"/>
+        <defs>
+          <linearGradient id="waterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#00b4d8"/>
+            <stop offset="100%" stop-color="#0077b6"/>
+          </linearGradient>
+          <radialGradient id="logoGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00b4d8"/>
+            <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+      </svg>
+      <div>
+        <h1 class="brand-title">JalaMitra</h1>
+        <div class="brand-subtitle">Smart Water & Drainage Portal</div>
+      </div>
+    </div>
+
+    <div class="header-controls">
+      <!-- Role Switcher -->
+      <div class="role-badge" id="roleBadge">
+        <i data-lucide="user"></i> <span id="roleText">Resident View</span>
+      </div>
+
+      <!-- Viewport Mode Toggle -->
+      <button class="mode-toggle-btn" id="viewModeBtn" onclick="toggleViewMode()" title="Switch Phone / Desktop Frame">
+        <i data-lucide="smartphone"></i> <span id="viewModeText">Phone Frame</span>
+      </button>
+
+      <!-- Dark / Light Theme Toggle -->
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <i data-lucide="moon" id="themeIcon"></i>
+      </button>
+
+      <!-- Language Selector -->
+      <select class="lang-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी</option>
+        <option value="te">తెలుగు</option>
+        <option value="kn">ಕನ್ನಡ</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <div class="app-viewport-wrapper full-mode" id="viewportWrapper">
+    <div class="full-frame" id="appFrame">
+      
+      <!-- PHONE NOTCH & STATUS BAR (Visible only in Phone Mode) -->
+      <div class="phone-notch"></div>
+      <div class="phone-status-bar">
+        <span>09:41</span>
+        <span>JalaMitra 5G • 88% <i data-lucide="battery-charging" style="width:14px; height:14px; vertical-align:middle;"></i></span>
+      </div>
+
+      <!-- LAYOUT CONTAINER -->
+      <div class="app-layout">
+
+        <!-- SIDEBAR NAVIGATION (Desktop) -->
+        <aside class="app-sidebar">
+          <div class="nav-item active" data-page="home" onclick="navigateTo('home')">
+            <i data-lucide="home"></i> Home
+          </div>
+          <div class="nav-item" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <i data-lucide="layout-dashboard"></i> Resident Dashboard
+          </div>
+          <div class="nav-item" data-page="water" onclick="navigateTo('water')">
+            <i data-lucide="droplet"></i> Water Supply
+          </div>
+          <div class="nav-item" data-page="drainage" onclick="navigateTo('drainage')">
+            <i data-lucide="waves"></i> Drainage
+          </div>
+          <div class="nav-item" data-page="report" onclick="navigateTo('report')">
+            <i data-lucide="alert-circle"></i> Report Problem
+          </div>
+          <div class="nav-item" data-page="tracking" onclick="navigateTo('tracking')">
+            <i data-lucide="file-search"></i> Complaint Tracking
+          </div>
+          <div class="nav-item" data-page="map" onclick="navigateTo('map')">
+            <i data-lucide="map-pin"></i> Community Map
+          </div>
+          <div class="nav-item" data-page="admin" onclick="navigateTo('admin')">
+            <i data-lucide="shield-check"></i> Admin Dashboard
+          </div>
+          <div class="nav-item" data-page="health" onclick="navigateTo('health')">
+            <i data-lucide="heart-pulse"></i> Health & Environment
+          </div>
+          <div class="nav-item" data-page="feedback" onclick="navigateTo('feedback')">
+            <i data-lucide="star"></i> Feedback
+          </div>
+        </aside>
+
+        <!-- APP CONTENT AREA (DYNAMIC PAGES) -->
+        <main class="app-content">
+
+          <!-- PAGE 1: HOME PAGE -->
+          <section id="page-home" class="page-view active">
+            <div class="hero-banner">
+              <div class="hero-logo-large">
+                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M50 10 C30 40, 15 60, 15 75 A35 35 0 0 0 85 75 C85 60, 70 40, 50 10 Z" fill="url(#heroDropGrad)"/>
+                  <path d="M50 35 C40 55, 30 65, 50 82 C70 65, 60 55, 50 35 Z" fill="#34d399"/>
+                  <defs>
+                    <linearGradient id="heroDropGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#90e0ef"/>
+                      <stop offset="50%" stop-color="#00b4d8"/>
+                      <stop offset="100%" stop-color="#0077b6"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div>
+                  <h2 class="hero-title">JalaMitra</h2>
+                  <div class="hero-tagline">Clean Water. Healthy Communities. Smarter Solutions.</div>
+                </div>
+              </div>
+              <p class="hero-desc">
+                Empowering rural and semi-urban communities with real-time water supply tracking, instant drainage issue reporting, GIS community mapping, and automated health risk monitoring.
+              </p>
+              <div class="hero-actions">
+                <button class="btn btn-primary" onclick="navigateTo('dashboard')">
+                  <i data-lucide="compass"></i> Get Started
+                </button>
+                <button class="btn btn-eco" onclick="navigateTo('report')">
+                  <i data-lucide="plus-circle"></i> Report Problem
+                </button>
+              </div>
+            </div>
+
+            <!-- Stats Ticker -->
+            <div class="stats-ticker">
+              <div class="stat-chip">
+                <div class="stat-number" id="statResolvedCount">1,420+</div>
+                <div class="stat-label">Issues Resolved</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Wards Connected</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number">18.5 hrs</div>
+                <div class="stat-label">Avg. Response Time</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number">98.4%</div>
+                <div class="stat-label">Water Purity Score</div>
+              </div>
+            </div>
+
+            <!-- Features Grid -->
+            <h3 style="margin-bottom: 1rem; font-family: var(--font-heading);">Key Portal Features</h3>
+            <div class="features-grid">
+              <div class="feature-card" onclick="navigateTo('water')">
+                <div class="feature-icon-box"><i data-lucide="droplet"></i></div>
+                <h4 style="margin-bottom:0.4rem;">Water Supply Status</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Real-time availability updates, tanker schedules, and purity tests.</p>
+              </div>
+              <div class="feature-card" onclick="navigateTo('drainage')">
+                <div class="feature-icon-box" style="background:rgba(16,185,129,0.15); color:var(--eco-600);"><i data-lucide="waves"></i></div>
+                <h4 style="margin-bottom:0.4rem;">Drainage & Sanitation</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Report choked drains, stagnant water & track cleaning operations.</p>
+              </div>
+              <div class="feature-card" onclick="navigateTo('map')">
+                <div class="feature-icon-box" style="background:rgba(59,130,246,0.15); color:var(--info-500);"><i data-lucide="map-pin"></i></div>
+                <h4 style="margin-bottom:0.4rem;">GIS Community Map</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Visual geotagged map showing problem hotspots & flood risk zones.</p>
+              </div>
+              <div class="feature-card" onclick="navigateTo('health')">
+                <div class="feature-icon-box" style="background:rgba(245,158,11,0.15); color:var(--warning-500);"><i data-lucide="heart-pulse"></i></div>
+                <h4 style="margin-bottom:0.4rem;">Health & Environment</h4>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Mosquito breeding risk indexes & water safety guidelines.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- PAGE 2: RESIDENT DASHBOARD -->
+          <section id="page-dashboard" class="page-view">
+            <div class="card-header">
+              <h2 class="card-title"><i data-lucide="layout-dashboard"></i> Resident Community Dashboard</h2>
+              <span class="badge badge-success"><i data-lucide="check-circle-2"></i> Ward 2 Active</span>
+            </div>
+
+            <!-- Community Alert Banner -->
+            <div class="alert-banner">
+              <i data-lucide="bell" style="color:var(--warning-500); font-size:1.4rem;"></i>
+              <div>
+                <strong>Community Alert:</strong> Scheduled pipeline maintenance in Ward 4 tomorrow (10:00 AM - 02:00 PM). Additional tanker water stationed near Temple Grounds.
+              </div>
+            </div>
+
+            <div class="dashboard-grid">
+              <!-- Water Supply Status Card -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title"><i data-lucide="droplets"></i> Water Supply Status</span>
+                  <span class="badge badge-success">Available</span>
+                </div>
+                <div class="status-widget">
+                  <div class="status-icon-circle" style="background:rgba(0,180,216,0.15); color:var(--primary-500);">
+                    <i data-lucide="shower-head"></i>
+                  </div>
+                  <div>
+                    <h4 style="font-size:0.95rem;">Municipal Tap Supply</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Next Slot: 05:00 PM - 07:30 PM</p>
+                    <p style="font-size:0.8rem; font-weight:700; color:var(--eco-600); margin-top:0.2rem;">Pressure: Good (4.2 Bar)</p>
+                  </div>
+                </div>
+                <button class="btn btn-outline btn-block btn-sm" style="margin-top:1rem;" onclick="navigateTo('water')">
+                  View Supply Details
+                </button>
+              </div>
+
+              <!-- Drainage Status Card -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title"><i data-lucide="waves"></i> Drainage Health</span>
+                  <span class="badge badge-warning">Attention</span>
+                </div>
+                <div class="status-widget" style="background:rgba(245,158,11,0.05); border-color:rgba(245,158,11,0.2);">
+                  <div class="status-icon-circle" style="background:rgba(245,158,11,0.15); color:var(--warning-500);">
+                    <i data-lucide="alert-triangle"></i>
+                  </div>
+                  <div>
+                    <h4 style="font-size:0.95rem;">Main Market Drain</h4>
+                    <p style="font-size:0.8rem; color:var(--text-muted);">Partial blockage reported near Shop #14</p>
+                    <p style="font-size:0.8rem; font-weight:700; color:var(--warning-500); margin-top:0.2rem;">Cleaning Crew Enroute</p>
+                  </div>
+                </div>
+                <button class="btn btn-outline btn-block btn-sm" style="margin-top:1rem;" onclick="navigateTo('drainage')">
+                  View Drainage Status
+                </button>
+              </div>
+
+              <!-- My Complaints Summary Card -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title"><i data-lucide="file-text"></i> My Complaints</span>
+                  <button class="btn btn-primary btn-sm" onclick="navigateTo('report')">+ New</button>
+                </div>
+                <div id="myComplaintsList">
+                  <!-- Dynamic content populated via JavaScript -->
+                </div>
+                <button class="btn btn-secondary btn-block btn-sm" style="margin-top:0.75rem;" onclick="navigateTo('tracking')">
+                  Track All Complaints
+                </button>
+              </div>
+
+              <!-- Community Risk Level Widget -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title"><i data-lucide="activity"></i> Overall Community Risk Level</span>
+                  <span class="badge badge-success">Low Risk</span>
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-muted);">
+                  Composite index based on standing water, water quality tests & weather alerts.
+                </p>
+                <div class="risk-level-bar">
+                  <div class="risk-seg-low" title="Low Risk"></div>
+                  <div class="risk-seg-med" title="Moderate Risk"></div>
+                  <div class="risk-seg-high" title="High Risk"></div>
+                </div>
+                <div style="display:flex; justify-space-between; font-size:0.75rem; color:var(--text-muted); font-weight:600;">
+                  <span>🟢 Safe (68%)</span>
+                  <span>🟡 Moderate</span>
+                  <span>🔴 Critical</span>
+                </div>
+                <button class="btn btn-outline btn-block btn-sm" style="margin-top:1rem;" onclick="navigateTo('health')">
+                  View Health Advisories
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- PAGE 3: WATER SUPPLY -->
+          <section id="page-water" class="page-view">
+            <div class="supply-status-hero">
+              <div>
+                <h2 style="font-family:var(--font-heading); font-size:1.5rem;">Water Supply Monitoring</h2>
+                <p style="font-size:0.9rem; opacity:0.9;">Ward 2 – Primary Distribution Grid</p>
+              </div>
+              <span class="badge badge-success" style="background:#ffffff; color:var(--primary-600); font-size:0.85rem; padding:0.4rem 0.9rem;">
+                <i data-lucide="check-circle-2"></i> Supply Available
+              </span>
+            </div>
+
+            <!-- Reservoir Overhead Level -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="database"></i> Main Reservoir Water Level</span>
+                <span style="font-weight:700; color:var(--primary-500);">78% Capacity</span>
+              </div>
+              <div class="water-tank-visual">
+                <div class="water-tank-fill" id="waterTankFill"></div>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-muted); font-weight:600;">
+                <span>0 Liters (Empty)</span>
+                <span>Target: 150,000 L</span>
+                <span>Current: 117,000 L</span>
+              </div>
+            </div>
+
+            <!-- Water Sources Grid -->
+            <h3 style="margin: 1.5rem 0 0.75rem; font-family:var(--font-heading);">Select Water Source</h3>
+            <div class="source-options">
+              <div class="source-card active" onclick="selectWaterSource('tap', this)">
+                <i data-lucide="faucet"></i>
+                <div style="font-weight:700; font-size:0.85rem;">Municipal Tap</div>
+                <div style="font-size:0.75rem; color:var(--eco-600);">Active</div>
+              </div>
+              <div class="source-card" onclick="selectWaterSource('borewell', this)">
+                <i data-lucide="disc-3"></i>
+                <div style="font-weight:700; font-size:0.85rem;">Borewell #2</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Standby</div>
+              </div>
+              <div class="source-card" onclick="selectWaterSource('tanker', this)">
+                <i data-lucide="truck"></i>
+                <div style="font-weight:700; font-size:0.85rem;">Emergency Tanker</div>
+                <div style="font-size:0.75rem; color:var(--info-500);">Dispatched</div>
+              </div>
+            </div>
+
+            <!-- Supply Timing Schedule -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="clock"></i> Daily Supply Timings</span>
+                <span class="badge badge-info">On Schedule</span>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div style="background:var(--bg-app); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                  <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">MORNING SLOT</div>
+                  <div style="font-size:1.2rem; font-weight:800; color:var(--primary-500); margin:0.2rem 0;">06:00 AM - 09:00 AM</div>
+                  <div style="font-size:0.75rem; color:var(--eco-600); font-weight:600;">✓ Completed Today</div>
+                </div>
+                <div style="background:var(--bg-app); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+                  <div style="font-size:0.8rem; color:var(--text-muted); font-weight:700;">EVENING SLOT</div>
+                  <div style="font-size:1.2rem; font-weight:800; color:var(--primary-500); margin:0.2rem 0;">05:00 PM - 07:30 PM</div>
+                  <div style="font-size:0.75rem; color:var(--warning-500); font-weight:600;">⏱ Starts in 2h 45m</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons for Water Complaints -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <button class="btn btn-outline btn-block" onclick="reportWaterIssue('Irregular Supply')">
+                <i data-lucide="clock-alert"></i> Report Irregular Supply
+              </button>
+              <button class="btn btn-outline btn-block" style="border-color:var(--danger-500); color:var(--danger-500);" onclick="reportWaterIssue('Water Quality / Contamination')">
+                <i data-lucide="flask-conical"></i> Water Quality Complaint
+              </button>
+            </div>
+          </section>
+
+          <!-- PAGE 4: DRAINAGE -->
+          <section id="page-drainage" class="page-view">
+            <div class="card-header">
+              <h2 class="card-title"><i data-lucide="waves"></i> Drainage & Sanitation System</h2>
+              <button class="btn btn-eco btn-sm" onclick="navigateTo('report')">+ Report Drainage Issue</button>
+            </div>
+
+            <div class="drainage-grid" style="margin-bottom:1.5rem;">
+              <div class="drain-type-card" onclick="reportDrainageIssue('Blocked Drain')">
+                <i data-lucide="ban"></i>
+                <h4 style="font-size:0.95rem;">Blocked Drain</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">Silt or plastic waste obstruction</p>
+              </div>
+              <div class="drain-type-card" onclick="reportDrainageIssue('Drain Overflow')">
+                <i data-lucide="arrow-up-right-from-circle"></i>
+                <h4 style="font-size:0.95rem;">Drain Overflow</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">Water spilling onto roads</p>
+              </div>
+              <div class="drain-type-card" onclick="reportDrainageIssue('Stagnant Water')">
+                <i data-lucide="cloud-rain"></i>
+                <h4 style="font-size:0.95rem;">Stagnant Water</h4>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">Mosquito breeding risk pool</p>
+              </div>
+            </div>
+
+            <!-- Ward Cleaning Status -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="sparkles"></i> Ward Drain Cleaning Schedule</span>
+                <span class="badge badge-info">Weekly Drive</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:var(--bg-app); border-radius:var(--radius-sm);">
+                  <div>
+                    <strong>Ward 1 (North Village)</strong>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Cleaned yesterday by Sanitation Team A</div>
+                  </div>
+                  <span class="badge badge-success">Completed</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:var(--bg-app); border-radius:var(--radius-sm);">
+                  <div>
+                    <strong>Ward 2 (Market Area)</strong>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">In progress – Main line desilting</div>
+                  </div>
+                  <span class="badge badge-warning">In Progress</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:var(--bg-app); border-radius:var(--radius-sm);">
+                  <div>
+                    <strong>Ward 3 (South Colony)</strong>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Scheduled for Thursday 09:00 AM</div>
+                  </div>
+                  <span class="badge badge-info">Scheduled</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PAGE 5: REPORT PROBLEM -->
+          <section id="page-report" class="page-view">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title"><i data-lucide="alert-circle"></i> Report Water or Drainage Issue</h2>
+                <span class="badge badge-info">Instant Geo-Registration</span>
+              </div>
+              <form id="reportForm" onsubmit="handleFormSubmit(event)">
+                
+                <!-- Category Select -->
+                <div class="form-group">
+                  <label class="form-label" for="problemType">Select Problem Category *</label>
+                  <select class="form-select" id="problemType" required onchange="updateQuickChips()">
+                    <option value="">-- Choose Issue Type --</option>
+                    <optgroup label="Water Supply Problems">
+                      <option value="No Water Supply">No Water Supply</option>
+                      <option value="Low Water Pressure">Low Water Pressure</option>
+                      <option value="Contaminated / Dirty Water">Contaminated / Dirty Water</option>
+                      <option value="Pipeline Leakage">Pipeline Leakage</option>
+                    </optgroup>
+                    <optgroup label="Drainage & Sewage">
+                      <option value="Blocked Drain">Blocked Drain</option>
+                      <option value="Drain Overflow">Drain Overflow</option>
+                      <option value="Stagnant Water Pool">Stagnant Water Pool</option>
+                      <option value="Broken Drain Cover">Broken Drain Cover</option>
+                    </optgroup>
+                  </select>
+                </div>
+
+                <!-- Severity Picker -->
+                <div class="form-group">
+                  <label class="form-label">Urgency / Severity Level *</label>
+                  <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem;">
+                    <button type="button" class="btn btn-secondary severity-btn btn-sm active" data-severity="Low" onclick="setSeverity('Low', this)">Low</button>
+                    <button type="button" class="btn btn-secondary severity-btn btn-sm" data-severity="Medium" onclick="setSeverity('Medium', this)">Medium</button>
+                    <button type="button" class="btn btn-secondary severity-btn btn-sm" data-severity="Critical" onclick="setSeverity('Critical', this)">Critical / Urgent</button>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group">
+                  <label class="form-label" for="issueDescription">Description & Details *</label>
+                  <textarea class="form-control" id="issueDescription" rows="3" placeholder="Describe the issue (e.g. Foul smell, water leaking near temple ground)..." required></textarea>
+                  <div class="quick-chips" id="quickChipsContainer">
+                    <span class="chip" onclick="addChipText('Water pipeline leaking near temple')">+ Leaking Near Temple</span>
+                    <span class="chip" onclick="addChipText('Drain clogged with silt and plastic waste')">+ Clogged with Silt</span>
+                    <span class="chip" onclick="addChipText('Muddy water coming from tap')">+ Muddy Water</span>
+                  </div>
+                </div>
+
+                <!-- Location Selector -->
+                <div class="form-group">
+                  <label class="form-label">Location / Ward *</label>
+                  <div style="display:flex; gap:0.5rem;">
+                    <input type="text" class="form-control" id="locationInput" placeholder="e.g. Ward 2, Main Street, near Post Office" required value="Ward 2, Market Street">
+                    <button type="button" class="btn btn-secondary" onclick="detectGPSLocation()" title="Auto Detect Location">
+                      <i data-lucide="crosshair"></i> GPS
+                    </button>
+                  </div>
+                  <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.3rem;">Coordinates: <span id="gpsCoordsText">17.3850° N, 78.4867° E (Accurate 8m)</span></div>
+                </div>
+
+                <!-- Photo Upload Zone -->
+                <div class="form-group">
+                  <label class="form-label">Upload Photo (Optional but Recommended)</label>
+                  <div class="photo-upload-zone" onclick="document.getElementById('photoInput').click()">
+                    <i data-lucide="camera" style="font-size:2rem; color:var(--primary-500); margin-bottom:0.4rem;"></i>
+                    <div style="font-weight:700; font-size:0.9rem;">Click to Snap Camera or Upload Image</div>
+                    <div style="font-size:0.78rem; color:var(--text-muted);">Supports JPG, PNG up to 10MB</div>
+                    <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="handlePhotoUpload(event)">
+                    <img id="photoPreview" class="photo-preview-img" style="display:none;" alt="Uploaded Preview">
+                  </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn btn-primary btn-block">
+                  <i data-lucide="send"></i> Submit Report & Generate Complaint ID
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- PAGE 6: COMPLAINT TRACKING -->
+          <section id="page-tracking" class="page-view">
+            <div class="card-header">
+              <h2 class="card-title"><i data-lucide="file-search"></i> Complaint Status Tracking</h2>
+              <span class="badge badge-info">Live Updates</span>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="search-track-box">
+              <input type="text" class="form-control" id="trackSearchInput" placeholder="Enter Complaint ID (e.g. JM-2026-8942)...">
+              <button class="btn btn-primary" onclick="searchTrackComplaint()">
+                <i data-lucide="search"></i> Track
+              </button>
+            </div>
+
+            <!-- Tracking Card -->
+            <div class="card" id="trackingDetailCard">
+              <div class="card-header">
+                <div>
+                  <h3 style="font-family:var(--font-heading); font-size:1.15rem;" id="trackIDText">JM-2026-8942</h3>
+                  <div style="font-size:0.8rem; color:var(--text-muted);" id="trackDateText">Reported: Today, 08:30 AM</div>
+                </div>
+                <span class="badge badge-warning" id="trackStatusBadge">In Progress</span>
+              </div>
+
+              <!-- Stepper Pipeline -->
+              <div class="timeline-stepper">
+                <div class="step-item completed">
+                  <div class="step-icon"><i data-lucide="check"></i></div>
+                  <div class="step-label">Submitted</div>
+                </div>
+                <div class="step-item active">
+                  <div class="step-icon">2</div>
+                  <div class="step-label">In Progress</div>
+                </div>
+                <div class="step-item">
+                  <div class="step-icon">3</div>
+                  <div class="step-label">Resolved</div>
+                </div>
+              </div>
+
+              <!-- Issue Specs -->
+              <div style="background:var(--bg-app); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-color); margin-bottom:1rem;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.85rem;">
+                  <div><strong>Problem:</strong> <span id="trackProblemText">Blocked Drain near Market Gate</span></div>
+                  <div><strong>Location:</strong> <span id="trackLocationText">Ward 2, Main Market</span></div>
+                  <div><strong>Field Technician:</strong> <span id="trackOfficerText">Ramesh Kumar (Sanitation Dept)</span></div>
+                  <div><strong>Est. Completion:</strong> <span id="trackEstText">Today, 04:00 PM</span></div>
+                </div>
+              </div>
+
+              <div id="resolutionActionBox">
+                <!-- Shown if status is Resolved -->
+              </div>
+            </div>
+          </section>
+
+          <!-- PAGE 7: COMMUNITY MAP -->
+          <section id="page-map" class="page-view">
+
+            <!-- Header -->
+            <div class="map-page-header">
+              <div>
+                <h2 class="card-title" style="margin-bottom:0.1rem;"><i data-lucide="map-pin"></i> GIS Community Problem Map</h2>
+                <div style="font-size:0.78rem; color:var(--text-muted);">Geotagged issues across all wards — updated in real time</div>
+              </div>
+              <span class="live-dot">Live Geotagged Data</span>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="map-stats-bar">
+              <div class="map-stat-chip">
+                <div class="map-stat-num" style="color:var(--primary-600);" id="mapCountWater">2</div>
+                <div class="map-stat-label">💧 Water Issues</div>
+              </div>
+              <div class="map-stat-chip">
+                <div class="map-stat-num" style="color:var(--warning-500);" id="mapCountDrain">1</div>
+                <div class="map-stat-label">🟠 Blocked Drains</div>
+              </div>
+              <div class="map-stat-chip">
+                <div class="map-stat-num" style="color:var(--danger-500);" id="mapCountStagnant">1</div>
+                <div class="map-stat-label">🔴 Stagnant Water</div>
+              </div>
+              <div class="map-stat-chip">
+                <div class="map-stat-num" style="color:var(--eco-600);" id="mapCountResolved">1</div>
+                <div class="map-stat-label">✅ Resolved</div>
+              </div>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="map-filter-bar">
+              <button class="btn btn-secondary btn-sm active" onclick="filterMap('all', this)">🗺 All Problems</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterMap('water', this)">💧 Water Supply</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterMap('blocked', this)">🟠 Blocked Drains</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterMap('stagnant', this)">🔴 Stagnant Water</button>
+              <button class="btn btn-secondary btn-sm" onclick="filterMap('flood', this)">⚠️ Flood-Risk Zones</button>
+              <button class="btn btn-primary btn-sm" id="myLocationBtn" onclick="showMyLocationOnMap()" style="margin-left:auto;">📍 My Location</button>
+            </div>
+
+            <!-- My Location Info Card -->
+            <div id="myLocationCard" style="display:none; background:var(--bg-card); border:1.5px solid var(--primary-400); border-radius:var(--radius-md); padding:0.85rem 1rem; margin-bottom:0.75rem; animation: fadeIn 0.4s ease;">
+              <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.6rem;">
+                <div style="width:10px;height:10px;border-radius:50%;background:var(--primary-500);box-shadow:0 0 0 3px rgba(0,180,216,0.3);animation:pulse 1.5s infinite;"></div>
+                <span style="font-weight:700; font-size:0.9rem; color:var(--primary-600);">Your Current Location Detected</span>
+                <button onclick="document.getElementById('myLocationCard').style.display='none'" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;">✕</button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.83rem;">
+                <div><strong>📌 Village/Town:</strong> <span id="locVillage">Detecting...</span></div>
+                <div><strong>🏙 City/District:</strong> <span id="locCity">Detecting...</span></div>
+                <div><strong>🗺 State:</strong> <span id="locState">Detecting...</span></div>
+                <div><strong>🌍 Country:</strong> <span id="locCountry">Detecting...</span></div>
+              </div>
+              <div style="margin-top:0.55rem; padding:0.45rem 0.7rem; background:var(--bg-app); border-radius:var(--radius-sm); font-size:0.78rem; color:var(--text-muted);">
+                📡 GPS Coords: <span id="locCoords">Loading...</span>
+              </div>
+            </div>
+
+            <!-- Leaflet Map Container + Legend -->
+            <div class="map-container-box">
+              <div id="communityMap"></div>
+
+              <!-- Glassmorphism Legend Overlay -->
+              <div class="map-legend">
+                <div class="map-legend-title">Map Legend</div>
+                <div class="map-legend-item">
+                  <div class="map-legend-dot" style="background:#0077b6;"></div> Water Issue
+                </div>
+                <div class="map-legend-item">
+                  <div class="map-legend-dot" style="background:#f59e0b;"></div> Blocked Drain
+                </div>
+                <div class="map-legend-item">
+                  <div class="map-legend-dot" style="background:#ef4444;"></div> Stagnant Water
+                </div>
+                <div class="map-legend-item">
+                  <div class="map-legend-dot" style="background:#10b981;"></div> Resolved
+                </div>
+                <div class="map-legend-item">
+                  <div class="map-legend-dot" style="background:rgba(239,68,68,0.45); border-radius:3px;"></div> Flood Zone
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Info Bar -->
+            <div class="map-info-bar">
+              <span id="mapCenterLabel">📍 Centered on <strong>Hyderabad, Telangana</strong> &nbsp;|&nbsp; Zoom: 14x</span>
+              <div class="map-ward-chips">
+                <span class="map-ward-chip">Ward 1</span>
+                <span class="map-ward-chip">Ward 2</span>
+                <span class="map-ward-chip">Ward 3</span>
+                <span class="map-ward-chip">Ward 4</span>
+              </div>
+            </div>
+
+          </section>
+
+
+          <!-- PAGE 8: ADMIN DASHBOARD -->
+          <section id="page-admin" class="page-view">
+            <div class="card-header">
+              <h2 class="card-title"><i data-lucide="shield-check"></i> JalaMitra Municipal Admin Portal</h2>
+              <span class="badge badge-info">Super Admin Authorized</span>
+            </div>
+
+            <!-- Stat Counters -->
+            <div class="admin-metrics-grid">
+              <div class="stat-chip">
+                <div class="stat-number" id="adminTotalCount">24</div>
+                <div class="stat-label">Total Complaints</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number" style="color:var(--primary-500);" id="adminWaterCount">10</div>
+                <div class="stat-label">Water Issues</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number" style="color:var(--eco-600);" id="adminDrainageCount">14</div>
+                <div class="stat-label">Drainage Issues</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number" style="color:var(--warning-500);" id="adminPendingCount">8</div>
+                <div class="stat-label">Pending / In Progress</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-number" style="color:var(--eco-500);" id="adminResolvedCount">16</div>
+                <div class="stat-label">Resolved</div>
+              </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="admin-chart-row">
+              <div class="card">
+                <div class="card-title" style="margin-bottom:1rem;"><i data-lucide="pie-chart"></i> Issues by Category</div>
+                <canvas id="categoryChart" height="200"></canvas>
+              </div>
+              <div class="card">
+                <div class="card-title" style="margin-bottom:1rem;"><i data-lucide="bar-chart-3"></i> Resolution Velocity</div>
+                <canvas id="velocityChart" height="200"></canvas>
+              </div>
+            </div>
+
+            <!-- Admin Complaints Management Table -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="list"></i> Manage Citizen Complaints</span>
+                <span style="font-size:0.8rem; color:var(--text-muted);">Click status to change lifecycle state</span>
+              </div>
+              <div class="admin-table-wrapper">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Complaint ID</th>
+                      <th>Category</th>
+                      <th>Location</th>
+                      <th>Severity</th>
+                      <th>Current Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminTableBody">
+                    <!-- Dynamic populated -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- PAGE 9: HEALTH & ENVIRONMENT -->
+          <section id="page-health" class="page-view">
+            <div class="card-header">
+              <h2 class="card-title"><i data-lucide="heart-pulse"></i> Health & Eco Risk Advisory</h2>
+              <span class="badge badge-warning">Monsoon Watch Active</span>
+            </div>
+
+            <!-- Risk Meter Gauges -->
+            <div class="health-gauge-grid">
+              
+              <!-- Mosquito Risk -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title" style="font-size:0.95rem;"><i data-lucide="bug"></i> Mosquito Breeding Risk</span>
+                  <span class="badge badge-danger">High Risk</span>
+                </div>
+                <div style="font-size:1.6rem; font-weight:800; color:var(--danger-500);">72 / 100</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill" style="width:72%; background:var(--danger-500);"></div>
+                </div>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.4rem;">
+                  Stagnant water pools detected in Ward 3. High risk for Dengue & Malaria vectors.
+                </p>
+              </div>
+
+              <!-- Water Contamination -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title" style="font-size:0.95rem;"><i data-lucide="flask-conical"></i> Water Contamination Risk</span>
+                  <span class="badge badge-success">Low Risk</span>
+                </div>
+                <div style="font-size:1.6rem; font-weight:800; color:var(--eco-600);">18 / 100</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill" style="width:18%; background:var(--eco-500);"></div>
+                </div>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.4rem;">
+                  TDS Level: 210 ppm (Safe). Chlorine residual test passed.
+                </p>
+              </div>
+
+              <!-- Flooding Risk -->
+              <div class="card">
+                <div class="card-header">
+                  <span class="card-title" style="font-size:0.95rem;"><i data-lucide="cloud-rain"></i> Flooding Vulnerability</span>
+                  <span class="badge badge-warning">Moderate</span>
+                </div>
+                <div style="font-size:1.6rem; font-weight:800; color:var(--warning-500);">45 / 100</div>
+                <div class="risk-meter">
+                  <div class="risk-meter-fill" style="width:45%; background:var(--warning-500);"></div>
+                </div>
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:0.4rem;">
+                  Low-lying areas in Ward 4 susceptible during heavy downpours.
+                </p>
+              </div>
+            </div>
+
+            <!-- Safety Suggestions -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title"><i data-lucide="shield-alert"></i> Community Health Guidelines</span>
+              </div>
+              <ul style="padding-left:1.2rem; font-size:0.88rem; line-height:1.7; color:var(--text-main);">
+                <li><strong>Boil Drinking Water:</strong> Always boil municipal tap water for at least 3 minutes before consumption during monsoon rains.</li>
+                <li><strong>Clear Stagnant Basins:</strong> Empty discarded tires, coconut shells, and open drums to prevent mosquito breeding grounds.</li>
+                <li><strong>Unclog Household Drains:</strong> Keep household outflow drains free from solid garbage to avoid back-up during rains.</li>
+                <li><strong>Report Leaks Immediately:</strong> Use JalaMitra photo upload to report leaking pipes before contaminants seep in.</li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- PAGE 10: FEEDBACK -->
+          <section id="page-feedback" class="page-view">
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title"><i data-lucide="star"></i> Community Service Feedback</h2>
+                <span class="badge badge-info">Citizen Voice</span>
+              </div>
+
+              <form id="feedbackForm" onsubmit="handleFeedbackSubmit(event)">
+                
+                <!-- Star Rating -->
+                <div class="form-group" style="text-align:center;">
+                  <label class="form-label">Overall Experience Rating *</label>
+                  <div class="star-rating-box" id="starRatingBox">
+                    <i data-lucide="star" onclick="setStarRating(1)"></i>
+                    <i data-lucide="star" onclick="setStarRating(2)"></i>
+                    <i data-lucide="star" onclick="setStarRating(3)"></i>
+                    <i data-lucide="star" onclick="setStarRating(4)"></i>
+                    <i data-lucide="star" onclick="setStarRating(5)"></i>
+                  </div>
+                  <div style="font-size:0.9rem; font-weight:700; color:var(--primary-500);" id="ratingLabelText">Very Good (4 Stars)</div>
+                </div>
+
+                <!-- Water Satisfaction Slider -->
+                <div class="form-group">
+                  <label class="form-label" for="waterSatRange">Water Supply Satisfaction (1-100%)</label>
+                  <input type="range" class="form-control" id="waterSatRange" min="1" max="100" value="85" oninput="document.getElementById('waterSatVal').innerText = this.value + '%'">
+                  <div style="text-align:right; font-size:0.8rem; font-weight:700; color:var(--eco-600);" id="waterSatVal">85%</div>
+                </div>
+
+                <!-- Drainage Satisfaction Slider -->
+                <div class="form-group">
+                  <label class="form-label" for="drainSatRange">Drainage System Satisfaction (1-100%)</label>
+                  <input type="range" class="form-control" id="drainSatRange" min="1" max="100" value="78" oninput="document.getElementById('drainSatVal').innerText = this.value + '%'">
+                  <div style="text-align:right; font-size:0.8rem; font-weight:700; color:var(--primary-500);" id="drainSatVal">78%</div>
+                </div>
+
+                <!-- Suggestions Input -->
+                <div class="form-group">
+                  <label class="form-label" for="feedbackText">Suggestions for Improvement</label>
+                  <textarea class="form-control" id="feedbackText" rows="3" placeholder="Share your suggestions to help us serve your ward better..."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-eco btn-block">
+                  <i data-lucide="send"></i> Submit Community Feedback
+                </button>
+              </form>
+            </div>
+          </section>
+
+        </main>
+      </div>
+
+      <!-- BOTTOM NAVIGATION BAR (Phone Mode Only) -->
+      <nav class="bottom-nav">
+        <div class="bottom-nav-item active" data-page="home" onclick="navigateTo('home')">
+          <i data-lucide="home"></i> Home
+        </div>
+        <div class="bottom-nav-item" data-page="dashboard" onclick="navigateTo('dashboard')">
+          <i data-lucide="layout-dashboard"></i> Resident
+        </div>
+        <div class="bottom-nav-item fab-btn" data-page="report" onclick="navigateTo('report')">
+          <i data-lucide="plus"></i>
+        </div>
+        <div class="bottom-nav-item" data-page="tracking" onclick="navigateTo('tracking')">
+          <i data-lucide="file-search"></i> Track
+        </div>
+        <div class="bottom-nav-item" data-page="map" onclick="navigateTo('map')">
+          <i data-lucide="map-pin"></i> Map
+        </div>
+      </nav>
+
+    </div>
+  </div>
+
+  <!-- SUCCESS & CONFIRMATION MODAL -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal-card">
+      <div style="width:60px; height:60px; background:rgba(16,185,129,0.15); color:var(--eco-600); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem;">
+        <i data-lucide="check-circle"></i>
+      </div>
+      <h3 style="font-family:var(--font-heading); font-size:1.35rem; margin-bottom:0.4rem;" id="modalTitle">Report Submitted!</h3>
+      <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:1rem;" id="modalMessage">Your complaint has been successfully registered on the JalaMitra network.</p>
+      
+      <div style="background:var(--bg-app); padding:0.8rem; border-radius:var(--radius-md); border:1px solid var(--border-color); font-weight:800; font-size:1.2rem; color:var(--primary-500); margin-bottom:1.25rem;" id="modalComplaintID">
+        JM-2026-8942
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="closeModalAndTrack()">Track Status</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Controller -->
+  <script src="app.js"></script>
+
+</body>
+</html>
